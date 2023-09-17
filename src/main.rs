@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"]
 #![deny(clippy::all)]
 #![forbid(unsafe_code)]
 
@@ -26,21 +27,28 @@ fn main() -> Result<(), Error> {
     env_logger::init();
     let event_loop = EventLoop::new();
     let window = {
-        let monitor = event_loop
-            .available_monitors()
-            .last()
-            .expect("no monitor found");
-        let monitor_size = monitor.size();
-        WindowBuilder::new()
+        let mut builder = WindowBuilder::new();
+
+        builder = builder
             .with_title("d20 visualizer")
-            .with_inner_size(LogicalSize::new(
-                monitor_size.width as f64 * 0.85,
-                monitor_size.height as f64 * 0.85,
-            ))
-            .with_min_inner_size(LogicalSize::new(100., 100.))
-            .with_position(monitor.position())
-            .build(&event_loop)
-            .unwrap()
+            .with_min_inner_size(LogicalSize::new(100., 100.));
+
+        #[cfg(debug_assertions)]
+        {
+            let monitor = event_loop
+                .available_monitors()
+                .last()
+                .expect("no monitor found");
+            let monitor_size = monitor.size();
+            builder = builder
+                .with_position(monitor.position())
+                .with_inner_size(LogicalSize::new(
+                    monitor_size.width as f64 * 0.85,
+                    monitor_size.height as f64 * 0.85,
+                ));
+        }
+
+        builder.build(&event_loop).unwrap()
     };
 
     let inner_size = window.inner_size();
